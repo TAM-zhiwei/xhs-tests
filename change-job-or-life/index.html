@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>心理测试</title>
+<style>
+  :root { --accent: #7C9A92; --ink: #2c2c2e; --muted: #8a8a8e; --bg: #f7f5f2; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+         background: var(--bg); color: var(--ink); line-height: 1.7;
+         min-height: 100vh; display: flex; justify-content: center; }
+  .wrap { width: 100%; max-width: 480px; padding: 28px 22px 48px;
+          display: flex; flex-direction: column; min-height: 100vh; }
+  .screen { display: none; flex: 1; flex-direction: column; animation: fade .35s ease; }
+  .screen.active { display: flex; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* 封面 */
+  .cover { justify-content: center; text-align: center; gap: 18px; }
+  .cover h1 { font-size: 27px; font-weight: 700; letter-spacing: .5px; }
+  .cover .hook { color: var(--muted); font-size: 15px; }
+  .badge { align-self: center; font-size: 12px; color: var(--accent);
+           border: 1px solid var(--accent); border-radius: 999px; padding: 4px 14px; opacity: .85; }
+
+  /* 进度 */
+  .progress { font-size: 13px; color: var(--muted); margin-bottom: 18px; letter-spacing: 1px; }
+  .bar { height: 3px; background: #e6e2dc; border-radius: 2px; margin-bottom: 30px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .35s ease; }
+
+  /* 题目 */
+  .q { font-size: 21px; font-weight: 600; margin-bottom: 28px; }
+  .opt { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid #ece8e2;
+         border-radius: 14px; padding: 17px 18px; margin-bottom: 13px; font-size: 16px; color: var(--ink);
+         cursor: pointer; transition: transform .1s ease, border-color .2s ease; }
+  .opt:active { transform: scale(.98); border-color: var(--accent); }
+
+  /* 按钮 */
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 14px;
+         padding: 16px; font-size: 17px; font-weight: 600; cursor: pointer; width: 100%; }
+  .btn:active { opacity: .9; }
+
+  /* 结果 */
+  .result { gap: 14px; }
+  .result .label { font-size: 13px; color: var(--muted); letter-spacing: 2px; }
+  .result h2 { font-size: 25px; font-weight: 700; color: var(--accent); }
+  .result .summary { font-size: 16px; }
+  .dims { display: flex; flex-direction: column; gap: 10px; margin: 6px 0; }
+  .dim { background: #fff; border-radius: 12px; padding: 13px 15px; font-size: 15px; border-left: 3px solid var(--accent); }
+  .advice { font-size: 15px; color: var(--ink); background: rgba(124,154,146,.1);
+            border-radius: 12px; padding: 15px; }
+  .retry { background: none; border: none; color: var(--muted); font-size: 14px; margin-top: 10px; cursor: pointer; text-decoration: underline; }
+  .foot { text-align: center; color: #c4c0ba; font-size: 11px; margin-top: 26px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const CONTENT = {"slug": "change-job-or-life", "title": "你该换工作，还是换活法？", "hook": "5道题，看清你真正的困局", "accent": "#6B7F9E", "questions": [{"q": "周日晚上，你通常是什么状态？", "options": [{"text": "开始焦虑明天要面对的人或事，具体的", "scores": {"job": 2}}, {"text": "感到一种说不清的空洞——不是累，是麻", "scores": {"life": 2}}, {"text": "脑子停不下来，反复回想这周哪里没做好", "scores": {"mind": 2}}]}, {"q": "如果明天可以无条件辞职，你第一个念头是？", "options": [{"text": "终于可以离开这个环境/这个领导/这个方向了", "scores": {"job": 2}}, {"text": "我想要一种完全不同节奏的生活", "scores": {"life": 2}}, {"text": "先高兴一秒，然后马上担心：然后呢？", "scores": {"mind": 2}}, {"text": "不敢想，怕自己什么都不是", "scores": {"mind": 1, "life": 1}}]}, {"q": "你最羡慕的那种人，是哪种？", "options": [{"text": "在自己热爱的行业做事，钱也不少赚", "scores": {"job": 2}}, {"text": "时间自己掌控，生活节奏舒适，不卷", "scores": {"life": 2}}, {"text": "看上去很笃定，不被外界评价带着走", "scores": {"mind": 2}}]}, {"q": "你对现状最核心的不满，是？", "options": [{"text": "这份工作本身的内容/方向/天花板让我看不到未来", "scores": {"job": 3}}, {"text": "不是工作内容的问题，是它占据了我全部的时间和精力", "scores": {"life": 3}}, {"text": "其实条件还行，但我就是提不起劲、感觉不对劲", "scores": {"mind": 3}}]}, {"q": "如果换了工作，你觉得会发生什么？", "options": [{"text": "会好很多——我只是需要一个对的平台/方向", "scores": {"job": 2}}, {"text": "不一定，因为我根本不知道自己要的是什么生活", "scores": {"life": 2}}, {"text": "可能还是一样，换哪都带着自己那些焦虑", "scores": {"mind": 2}}]}], "results": [{"id": "job", "name": "你该换的是工作", "summary": "你心里其实早就清楚问题在哪，只是一直没走。不是这件事本身不行，而是这个环境、这个方向、这份付出换来的回报，和你想要的那条线对不上。你还有劲，只是不愿意把劲使在这里——这不是状态问题，是选择问题。换一个对的地方，你会重新有欲望。", "dimensions": ["你的不满有具体的地址：领导的决策方式、薪资跟不上付出、行业本身的天花板——你说得出来，说明你看见的是真实的外部错配，不是情绪发泄。", "你现在大概已经半脱离了：事情还在做，心已经在算另一条路——留下来的理由，主要是还没找到、或者还没准备好，而不是真的觉得这里值得。"], "advice": "把你说得出「具体不满」的那几条写下来，它们其实就是你换工作的筛选标准。对着标准找方向，比「想清楚再动」更管用。"}, {"id": "life", "name": "你该换的是活法", "summary": "你的困局不只是这份工作，而是整个生活的形状。你感到空洞，不是因为工作内容太差，而是它把你的时间、精力、注意力全部占满，让你没有空间做一个「完整的人」。换一份工作，你还是会掉进同样的时间漩涡。真正需要重建的，是你每天醒来之后那些时间属于谁、你允许生活里有什么。", "dimensions": ["你羡慕的不是别人的职位，而是别人掌控自己时间的方式——这说明你渴望的是自主权，而非更好的工作内容。", "你感到的那种「麻木」和「说不清的空洞」，通常不是工作内容造成的，而是长期生活结构失衡后身体发出的信号。"], "advice": "先在日历上划出一块只属于自己的时间，哪怕一周两小时。结构改变了，感受才会跟着变。"}, {"id": "mind", "name": "你该换的是心态", "summary": "你带着一套很重的内在剧本：必须做到、不能出错、别人怎么看我、我够不够好。这套剧本让你在任何工作里都跑不轻快。不是现实有多糟，而是你看待自己处境的方式让你持续耗损。换工作不会带走这些声音，它们会跟你一起搬家。真正的出口，是学会和自己内心那个严苛的声音谈判。", "dimensions": ["你常常在「还算不错的条件」里感到莫名的不对劲——这种落差通常来自内心的比较框架或过高的预期设定，而非现实本身。", "你对辞职的第一反应不是解脱，而是立刻涌现新的担忧——这是焦虑的典型迁移模式，说明问题的根源在内部，不在外部。"], "advice": "试着把「我应该做到」换成「我可以尝试」。松一点点，不是认输，是给自己留出呼吸的空间。"}]};
+
+(function () {
+  const app = document.getElementById("app");
+  document.documentElement.style.setProperty("--accent", CONTENT.accent);
+  document.title = CONTENT.title;
+  let qi = 0;
+  const scores = {};
+  CONTENT.results.forEach(r => { scores[r.id] = 0; });
+
+  function screen(cls, inner) {
+    const d = document.createElement("div");
+    d.className = "screen active " + cls;
+    d.innerHTML = inner;
+    app.innerHTML = "";
+    app.appendChild(d);
+    return d;
+  }
+
+  function showCover() {
+    const d = screen("cover", `
+      <div class="badge">${CONTENT.questions.length} 道题 · 心理测试</div>
+      <h1>${CONTENT.title}</h1>
+      <p class="hook">${CONTENT.hook}</p>
+      <button class="btn" id="start">开始测试</button>
+    `);
+    d.querySelector("#start").onclick = () => { qi = 0; showQuestion(); };
+  }
+
+  function showQuestion() {
+    const q = CONTENT.questions[qi];
+    const pct = Math.round((qi + 1) / CONTENT.questions.length * 100);
+    const opts = q.options.map((o, i) =>
+      `<button class="opt" data-i="${i}">${o.text}</button>`).join("");
+    const d = screen("question", `
+      <div class="progress">第 ${qi + 1} / ${CONTENT.questions.length} 题</div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="q">${q.q}</div>
+      ${opts}
+    `);
+    d.querySelectorAll(".opt").forEach(btn => {
+      btn.onclick = () => {
+        const o = q.options[+btn.dataset.i];
+        for (const k in o.scores) scores[k] += o.scores[k];
+        qi++;
+        if (qi < CONTENT.questions.length) showQuestion();
+        else showResult();
+      };
+    });
+  }
+
+  function pickResult() {
+    let best = CONTENT.results[0];
+    let bestScore = scores[best.id];
+    for (const r of CONTENT.results) {       // 顺序遍历，严格大于才替换 → 并列取靠前
+      if (scores[r.id] > bestScore) { best = r; bestScore = scores[r.id]; }
+    }
+    return best;
+  }
+
+  function showResult() {
+    const r = pickResult();
+    const dims = r.dimensions.map(t => `<div class="dim">${t}</div>`).join("");
+    const d = screen("result", `
+      <div class="label">你的结果</div>
+      <h2>${r.name}</h2>
+      <p class="summary">${r.summary}</p>
+      <div class="dims">${dims}</div>
+      <div class="advice">${r.advice}</div>
+      <button class="retry" id="retry">再测一次</button>
+      <div class="foot">仅供娱乐参考</div>
+    `);
+    d.querySelector("#retry").onclick = () => {
+      CONTENT.results.forEach(x => { scores[x.id] = 0; });
+      showCover();
+    };
+  }
+
+  showCover();
+})();
+</script>
+</body>
+</html>
