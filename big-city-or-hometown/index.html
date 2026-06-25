@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>心理测试</title>
+<style>
+  :root { --accent: #7C9A92; --ink: #2c2c2e; --muted: #8a8a8e; --bg: #f7f5f2; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+         background: var(--bg); color: var(--ink); line-height: 1.7;
+         min-height: 100vh; display: flex; justify-content: center; }
+  .wrap { width: 100%; max-width: 480px; padding: 28px 22px 48px;
+          display: flex; flex-direction: column; min-height: 100vh; }
+  .screen { display: none; flex: 1; flex-direction: column; animation: fade .35s ease; }
+  .screen.active { display: flex; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* 封面 */
+  .cover { justify-content: center; text-align: center; gap: 18px; }
+  .cover h1 { font-size: 27px; font-weight: 700; letter-spacing: .5px; }
+  .cover .hook { color: var(--muted); font-size: 15px; }
+  .badge { align-self: center; font-size: 12px; color: var(--accent);
+           border: 1px solid var(--accent); border-radius: 999px; padding: 4px 14px; opacity: .85; }
+
+  /* 进度 */
+  .progress { font-size: 13px; color: var(--muted); margin-bottom: 18px; letter-spacing: 1px; }
+  .bar { height: 3px; background: #e6e2dc; border-radius: 2px; margin-bottom: 30px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .35s ease; }
+
+  /* 题目 */
+  .q { font-size: 21px; font-weight: 600; margin-bottom: 28px; }
+  .opt { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid #ece8e2;
+         border-radius: 14px; padding: 17px 18px; margin-bottom: 13px; font-size: 16px; color: var(--ink);
+         cursor: pointer; transition: transform .1s ease, border-color .2s ease; }
+  .opt:active { transform: scale(.98); border-color: var(--accent); }
+
+  /* 按钮 */
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 14px;
+         padding: 16px; font-size: 17px; font-weight: 600; cursor: pointer; width: 100%; }
+  .btn:active { opacity: .9; }
+
+  /* 结果 */
+  .result { gap: 14px; }
+  .result .label { font-size: 13px; color: var(--muted); letter-spacing: 2px; }
+  .result h2 { font-size: 25px; font-weight: 700; color: var(--accent); }
+  .result .summary { font-size: 16px; }
+  .dims { display: flex; flex-direction: column; gap: 10px; margin: 6px 0; }
+  .dim { background: #fff; border-radius: 12px; padding: 13px 15px; font-size: 15px; border-left: 3px solid var(--accent); }
+  .advice { font-size: 15px; color: var(--ink); background: rgba(124,154,146,.1);
+            border-radius: 12px; padding: 15px; }
+  .retry { background: none; border: none; color: var(--muted); font-size: 14px; margin-top: 10px; cursor: pointer; text-decoration: underline; }
+  .foot { text-align: center; color: #c4c0ba; font-size: 11px; margin-top: 26px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const CONTENT = {"slug": "big-city-or-hometown", "title": "你该留在大城市，还是回老家？", "hook": "5道题，看清你真正在纠结什么", "accent": "#9C7C6B", "questions": [{"q": "想到「在哪里生活」，你最先冒出来的画面是？", "options": [{"text": "一个还没去过、但很想闯一闯的更大的地方", "scores": {"city": 2}}, {"text": "家里那张熟悉的饭桌，和爸妈的唠叨", "scores": {"home": 2}}, {"text": "一片模糊，你也说不清自己到底想要什么", "scores": {"inner": 2}}]}, {"q": "让你动了「换个地方」念头的，更多是？", "options": [{"text": "这里太贵太挤，生活被房租和通勤压扁了", "scores": {"home": 2}}, {"text": "这里太小太闷，容不下你想做的事", "scores": {"city": 2}}, {"text": "说不上来，就是一种「待不下去」的烦躁", "scores": {"inner": 2}}]}, {"q": "先不考虑钱和家人，你理想中的一天是？", "options": [{"text": "节奏快、信息多，随时有新机会撞上来", "scores": {"city": 2}}, {"text": "慢一点、熟人社会，晚上能按时回家吃饭", "scores": {"home": 2}}, {"text": "我好像没认真想过「理想的一天」长什么样", "scores": {"inner": 2}}]}, {"q": "你最怕「选错」之后，是哪一种后悔？", "options": [{"text": "怕留在原地，几年后发现自己本可以更大", "scores": {"city": 3}}, {"text": "怕一直漂着，错过了陪家人和本该有的安稳", "scores": {"home": 3}}, {"text": "怕无论选哪边，过两年还是现在这种拧巴", "scores": {"inner": 3}}]}, {"q": "提到「回老家」或「留下来」，你身体的第一反应是？", "options": [{"text": "兴奋多于害怕，一想到机会就来劲", "scores": {"city": 2}}, {"text": "松一口气，像终于可以卸下盔甲", "scores": {"home": 2}}, {"text": "又焦虑又想逃，根本不想面对这个选择", "scores": {"inner": 2}}]}], "results": [{"id": "city", "name": "你的根，适合扎在大城市", "summary": "你不是非留在大城市不可，而是你心里那股劲，只有在足够大的地方才使得出来。慢节奏会让你发慌，熟人社会会让你觉得被一眼看穿。你要的从来不是安稳，是「还有可能」这四个字带来的呼吸感。回去也许更舒服，但你大概会一直惦记那个没去成的自己。", "dimensions": ["你描述理想生活时，关键词是机会、舞台、新鲜——你靠「往前」获得能量，而不是靠「安定」。", "你最怕的后悔是「本可以更大」，说明你心里那扇门还没关，逼自己关上只会更拧巴。"], "advice": "别急着用「稳定」说服自己。给大城市再定一个具体的期限和目标，到点了再认真复盘走还是留。"}, {"id": "home", "name": "你的根，适合扎回熟悉的地方", "summary": "你这些年其实一直在硬撑。大城市给了你见识，也悄悄抽走了你的力气——房租、通勤、那种谁也不认识谁的孤独。你想回去，不是认输，是你终于诚实地承认：比起「更大」，你更想要「踏实」。熟悉的人和慢下来的日子，对你不是退路，是养分。", "dimensions": ["让你想走的是「成本压垮了生活」，你要的不是更高的天花板，是一块能喘气的地板。", "一想到回去你是「松一口气」而不是「不甘心」——身体往往比脑子更早知道答案。"], "advice": "回去不等于停下。先想清楚回去之后靠什么立足，把「退」变成一次有准备的「转」。"}, {"id": "inner", "name": "困住你的不是城市，是还没想清楚要什么", "summary": "换城市像是个出口，但你心里清楚，真正卡住你的不是这里、也不是那里。无论留还是回，那种「待不下去」的烦，很可能会跟着你一起搬家。你现在需要的不是一张车票，是先停下来问自己：我到底在逃避什么？想清楚之前，换到哪儿都差不多。", "dimensions": ["你说不清理想的一天长什么样，也描述不出想要的生活——方向感的缺失，不是地理位置能解决的。", "面对选择你又焦虑又想逃，说明卡点在「想要什么」还没有答案，而不在「去哪里」。"], "advice": "先别急着决定走或留。花两周认真记下：什么让你有劲、什么让你被耗干。答案会自己浮上来。"}]};
+
+(function () {
+  const app = document.getElementById("app");
+  document.documentElement.style.setProperty("--accent", CONTENT.accent);
+  document.title = CONTENT.title;
+  let qi = 0;
+  const scores = {};
+  CONTENT.results.forEach(r => { scores[r.id] = 0; });
+
+  function screen(cls, inner) {
+    const d = document.createElement("div");
+    d.className = "screen active " + cls;
+    d.innerHTML = inner;
+    app.innerHTML = "";
+    app.appendChild(d);
+    return d;
+  }
+
+  function showCover() {
+    const d = screen("cover", `
+      <div class="badge">${CONTENT.questions.length} 道题 · 心理测试</div>
+      <h1>${CONTENT.title}</h1>
+      <p class="hook">${CONTENT.hook}</p>
+      <button class="btn" id="start">开始测试</button>
+    `);
+    d.querySelector("#start").onclick = () => { qi = 0; showQuestion(); };
+  }
+
+  function showQuestion() {
+    const q = CONTENT.questions[qi];
+    const pct = Math.round((qi + 1) / CONTENT.questions.length * 100);
+    const opts = q.options.map((o, i) =>
+      `<button class="opt" data-i="${i}">${o.text}</button>`).join("");
+    const d = screen("question", `
+      <div class="progress">第 ${qi + 1} / ${CONTENT.questions.length} 题</div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="q">${q.q}</div>
+      ${opts}
+    `);
+    d.querySelectorAll(".opt").forEach(btn => {
+      btn.onclick = () => {
+        const o = q.options[+btn.dataset.i];
+        for (const k in o.scores) scores[k] += o.scores[k];
+        qi++;
+        if (qi < CONTENT.questions.length) showQuestion();
+        else showResult();
+      };
+    });
+  }
+
+  function pickResult() {
+    let best = CONTENT.results[0];
+    let bestScore = scores[best.id];
+    for (const r of CONTENT.results) {       // 顺序遍历，严格大于才替换 → 并列取靠前
+      if (scores[r.id] > bestScore) { best = r; bestScore = scores[r.id]; }
+    }
+    return best;
+  }
+
+  function showResult() {
+    const r = pickResult();
+    const dims = r.dimensions.map(t => `<div class="dim">${t}</div>`).join("");
+    const d = screen("result", `
+      <div class="label">你的结果</div>
+      <h2>${r.name}</h2>
+      <p class="summary">${r.summary}</p>
+      <div class="dims">${dims}</div>
+      <div class="advice">${r.advice}</div>
+      <button class="retry" id="retry">再测一次</button>
+      <div class="foot">仅供娱乐参考</div>
+    `);
+    d.querySelector("#retry").onclick = () => {
+      CONTENT.results.forEach(x => { scores[x.id] = 0; });
+      showCover();
+    };
+  }
+
+  showCover();
+})();
+</script>
+</body>
+</html>
